@@ -1,7 +1,7 @@
 # built-in modules
 from subprocess import run as cmd_run
-from subprocess import PIPE
-from pathlib import Path
+from subprocess import PIPE, CalledProcessError
+from datetime import datetime as dt
 
 # third party libraries
 import numpy as np
@@ -42,14 +42,7 @@ verbose = no
     INCIDENT KINETIC ENERGY= 0.001, 1.5, 5
     Incident Charge=         0
 :Stop Source Input:
-"""
-	if pegsless:
-		file_contents += f"""
-:Start Media Definition:
-    material data file = {str(sys_info.brachy_lib)}/media/material.dat
-:Stop Media Definition:
-"""
-	file_contents += f"""
+
 :Start MC Transport Parameter:
     Global ECUT=                    0.512
     Global PCUT=                    0.001
@@ -79,8 +72,11 @@ verbose = no
     ue = 2.511
     ap = 0.001
     up = 2.00
-:Stop Media Definition:
 """
+	if pegsless:
+		file_contents += f"    material data file = {str(sys_info.brachy_lib)}/media/material.dat\n"
+	file_contents += ":Stop Media Definition:\n"
+
 	with open(sys_info.g / f"{material_name}.egsinp", 'w') as f:
 		f.write(file_contents)
 
@@ -95,16 +91,16 @@ def recall_cached_muen_for_material_named(material_name: str) -> tuple[str, list
 	with open(sys_info.g / f"{material_name}.tmpmuen", "r") as f:
 		for iline, line in enumerate(f):
 			if iline == 0:
-				pegs4source = line
+				pegs4source = line.strip()
 				continue
 			components = line.split()
-			energies.append(components[0])
-			muens.append(components[1])
+			energies.append(float(components[0]))
+			muens.append(float(components[1]))
 	return pegs4source, energies, muens
 
 def calculate_muen_for_material_named(
 		material_name: str,
-		prev_pegs4: str
+		prev_pegs4: str | None = None
 ) -> tuple[str, list[float], list[float]]:
 	"""
 	Creates an input file for the material, runs the input file through the g application, extracts the numerical
@@ -125,23 +121,30 @@ def calculate_muen_for_material_named(
 			    check = True
 			)
 			pegs4source = "egs_brachy/lib/media/material.dat"
-	except:
+	except CalledProcessError:
 		# Failed to find the material in material.dat, will have to to a run with pegs4 input
-		create_egsinp_for_material_named(material_name, pegsless=False)
 		print(f"Trying with pegs4 input: suggested to be at {prev_pegs4}")
+		if prev_pegs4 is None:
+			raise SystemExit
 		if prev_pegs4[-8:] == ".muendat":
 			prev_pegs4 = prev_pegs4[:-8].split('/')[-1]
 		print(f"Looking in {prev_pegs4}")
 
-		with open(sys_info.g / f"{material_name}.log", "w") as logfile:
-			cmd_run(
-				args = ["g", "-i", f"{material_name}.egsinp", "-p", f"{prev_pegs4}"],
-				stdout = logfile,
-			    cwd = sys_info.g,
-				stderr = PIPE,
-			    check = True
-			)
-			pegs4source = f"HEN_HOUSE/pegs4/data/{prev_pegs4}.pegs4dat"
+		try:
+			create_egsinp_for_material_named(material_name, pegsless=False)
+			with open(sys_info.g / f"{material_name}.log", "w") as logfile:
+				cmd_run(
+					args = ["g", "-i", f"{material_name}.egsinp", "-p", f"{prev_pegs4}"],
+					stdout = logfile,
+					cwd = sys_info.g,
+					stderr = PIPE,
+					check = True
+				)
+				pegs4source = f"HEN_HOUSE/pegs4/data/{prev_pegs4}.pegs4dat"
+		except CalledProcessError:
+			print(f"No new data possible for {material_name}. This material will not appear in the new dataset")
+			return "", [], []
+
 	# Extract the new data from the log file
 	energies: list[float] = []
 	muens: list[float] = []
@@ -221,9 +224,11 @@ def aggregate_tmpmuens_into_new_muendat(
 	and puts all data from these files into a single.muendat file
 	"""
 	for muendat_filename, file_data in new_data.items():
-		outfile.write(f"#\n# This file was generated automatically using muendat_generation.py\n"
-		              f"# See github.com/clrp-code/muendat-generation\n#\n")
 		with open(sys_info.g / f"{muendat_filename}.muendat", 'w') as outfile:
+			outfile.write(f"#\n# {dt.now().replace(microsecond=0)}\n"
+						  f"# This file was generated automatically using muendat_generation.py\n"
+						  f"# See github.com/clrp-code/muendat-generation for details\n"
+						  f"# All muen uncertainties are less than 0.1%\n#\n")
 			for material_name in file_data.keys():
 				pegs4source, energies, muens = file_data[material_name]
 				outfile.write(f"Muen values for medium MEDIUM = {material_name}\n"
@@ -247,7 +252,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 	prev_data = extract_previous_muendat()
 	new_data = {}
 	for prev_muendat_filename, file_data in prev_data.items():
-		print(f"Working on {prev_muendat_filename}")
+		print(f"\nWorking on {prev_muendat_filename}")
 		file_dict = {}
 
 		for material_name, mat_data in file_data.items():
@@ -285,9 +290,9 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 		print(f"Working on additional {material_name}")
 
 		if (sys_info.g / f"{material_name}.tmpmuen").is_file():
-			energies, muens = recall_cached_muen_for_material_named(material_name)
+			pegs4source, energies, muens = recall_cached_muen_for_material_named(material_name)
 		else:
-			energies, muens = calculate_muen_for_material_named(material_name)
+			pegs4source, energies, muens = calculate_muen_for_material_named(material_name)
 		file_dict[material_name] = "egs_brachy/lib/media/material.dat", energies, muens
 
 	new_data['new_materials'] = file_dict

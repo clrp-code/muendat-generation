@@ -39,7 +39,7 @@ verbose = no
 
 :Start Source Input:
     INCIDENT SPECTRUM=       mono-energy-log-range
-    INCIDENT KINETIC ENERGY= 0.001, 1.5, 5
+    INCIDENT KINETIC ENERGY= 0.001, 1.5, 2000
     Incident Charge=         0
 :Stop Source Input:
 
@@ -108,6 +108,11 @@ def calculate_muen_for_material_named(
 	This functions returns a tuple of (pegs4source, energies, muens)
 	"""
 
+	if (sys_info.g / f"{material_name}.log").is_file():
+		print(f"We already tried to generate new data for {material_name}, and failed. "
+			  f"This material will not appear in the new dataset")
+		return "", [], []
+
 	# Run the g application
 	try:
 		# try in pegsless mode first
@@ -123,7 +128,7 @@ def calculate_muen_for_material_named(
 			pegs4source = "egs_brachy/lib/media/material.dat"
 	except CalledProcessError:
 		# Failed to find the material in material.dat, will have to to a run with pegs4 input
-		print(f"Trying with pegs4 input: suggested to be at {prev_pegs4}")
+		print(f"Failed pegsless, trying with pegs4 input: suggested to be at {prev_pegs4}")
 		if prev_pegs4 is None:
 			raise SystemExit
 		if prev_pegs4[-8:] == ".muendat":
@@ -182,25 +187,28 @@ def extract_previous_muendat() -> dict[str, dict[str, tuple[str, list[float], li
 
 	ret_dict = {}
 	for muendat_file in muendat_files:
+		print(f"\nExtracting from {muendat_file.stem}")
 
 		file_dict = {}
+		material_name = ""
 		pegs4source = ""
 		energies = []
 		muens = []
 		with open(muendat_file, 'r') as f:
 
 			for line in f:
+				line = line.strip()
 				if len(line) == 0:
 					continue
-				if line[0] == "#":  # Ignore easily-detactable comments
+				if line[0] == "#":  # Ignore easily-detectable comments
 					continue
 				components = line.split()
 				if len(components) < 1:
 					continue
 				if components[0] == "Muen":
-					material_name = line.split()[6]  # Muen values for medium MEDIUM = WATER_0.998
 					if len(energies) > 0:
 						file_dict[material_name] = pegs4source, energies, muens
+					material_name = line.split()[6]  # Muen values for medium MEDIUM = WATER_0.998
 					energies = []
 					muens = []
 				if components[0] == "Medium":
@@ -237,7 +245,6 @@ def aggregate_tmpmuens_into_new_muendat(
 				for energy, muen in zip(energies, muens):
 					outfile.write(f"{energy:.6f} MeV {muen:11.6f} cm^2/g\n")
 
-
 def main_loop(additional_material_names: list[str] | None = None) -> None:
 	"""
 	Finds old .muendat files in egs_brachy/lib, tries to replicate their results, and outputs
@@ -251,36 +258,40 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 
 	prev_data = extract_previous_muendat()
 	new_data = {}
+	ignored_list = []
 	for prev_muendat_filename, file_data in prev_data.items():
 		print(f"\nWorking on {prev_muendat_filename}")
 		file_dict = {}
 
 		for material_name, mat_data in file_data.items():
-			print(f"Working on {material_name}")
+			print(f"Working on {material_name}... ", end='')
 
 			prev_pegs4, prev_energies, prev_muens = mat_data
 			if (sys_info.g / f"{material_name}.tmpmuen").is_file():
 				pegs4source, energies, muens = recall_cached_muen_for_material_named(material_name)
+				print(f"extracted")
 			else:
 				pegs4source, energies, muens = calculate_muen_for_material_named(material_name, prev_pegs4)
+				print(f"done calculation")
 
 			if len(energies) > 0:
 				file_dict[material_name] = pegs4source, energies, muens
+			else:
+				ignored_list.append(material_name)
+				continue
 
 			if len(prev_energies) != len(energies):
 				print(f"Can't compare to previous .muendat: requested different number of new energies")
 				continue
 
 			material_old_new_dict[material_name] = energies, prev_muens, muens
-			diffs = np.array(muens) - np.array(prev_muens)
-			mean = diffs.mean()
-			std = diffs.std()
-			print(f"For material {material_name}, avg diff is {mean:.4f} with std {std:.4f} (rel_std = {mean/std:.4f})")
+			rel_diffs = np.array(muens) /  np.array(prev_muens) - 1
+			mean = rel_diffs.mean()
+			std = rel_diffs.std()
+			print(f"For material {material_name}, avg relative diff is {mean*100:.2f}% with std {std*100:.2f}%")
+			overlay_old_and_new_data(material_old_new_dict, material_name)
 
 		new_data[prev_muendat_filename] = file_dict
-
-	if "WATER_0.998" in material_old_new_dict:
-		overlay_old_and_new_data(material_old_new_dict, "WATER_0.998")
 
 	if len(material_old_new_dict) > 0:
 		plot_diffs(material_old_new_dict)
@@ -297,6 +308,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 
 	new_data['new_materials'] = file_dict
 	aggregate_tmpmuens_into_new_muendat(new_data)
+	print(f"We ignored \n{ignored_list}")
 
 if __name__ == "__main__":
 	main_loop()

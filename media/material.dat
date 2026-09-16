@@ -673,22 +673,12 @@ mass fractions = 0.1080, 0.3985, 0.02425, 0.46475, 0.001, 0.00075, 0.00175, 0.00
 bremsstrahlung correction = NRC
 
 
-# Ignore the name here. This composition was calculated with
-# 88% gland because I (MIW) suspect that the previous
-# 90GLAND-10ADIPOSE material definition was calculated wrong
-medium = 90GLAND-10ADIPOSE
-rho = 1.0116
-elements = H, C, N, O, NA, P, S, CL
-mass fractions = 0.10696, 0.36392, 0.02724, 0.49712, 0.001, 0.00088, 0.00188, 0.001
-bremsstrahlung correction = NRC
-
-
-medium = FAKE_90GLAND-10ADIPOSE
-rho = 1.0130
-elements = H, C, N, O, NA, P, S, CL
-mass fractions = 0.1068, 0.3586, 0.02770, 0.50210, 0.001, 0.00090, 0.00190, 0.001
-bremsstrahlung correction = NRC
-
+# does not agree with previous muendat files -- unreliable
+#medium = 90GLAND-10ADIPOSE
+#rho = 1.0130
+#elements = H, C, N, O, NA, P, S, CL
+#mass fractions = 0.1068, 0.3586, 0.02770, 0.50210, 0.001, 0.00090, 0.00190, 0.001
+#bremsstrahlung correction = NRC
 
 #################################################
 ##
@@ -703,17 +693,20 @@ elements = H, C, N, O, S, P, K, CA
 mass fractions = 0.112, 0.619, 0.017, 0.251, 0.00025, 0.00025, 0.00025, 0.00025
 bremsstrahlung correction = NRC
 
+
 medium = GLAND_H79
 rho = 1.04
 elements = H, C, N, O, S, P, K, CA
 mass fractions = 0.102, 0.184, 0.032, 0.677, 0.00125, 0.00125, 0.00125, 0.00125
 bremsstrahlung correction = NRC
 
-medium = SKIN_H79
-rho = 1.09
-elements = H, C, N, O, S, P, K, CA
-mass fractions = 0.098, 0.178, 0.050, 0.667, 0.0075, 0.0075, 0.0075, 0.0075
-bremsstrahlung correction = NRC
+
+# does not agree with previously calculated muendat files -- unreliable
+#medium = SKIN_H79
+#rho = 1.09
+#elements = H, C, N, O, S, P, K, CA
+#mass fractions = 0.098, 0.178, 0.050, 0.667, 0.0075, 0.0075, 0.0075, 0.0075
+#bremsstrahlung correction = NRC
 
 #################################################
 ##
@@ -1003,11 +996,12 @@ bremsstrahlung correction = NRC
 ##
 #################################################
 
-medium = PROSTATE_ICRP23
-rho = 0.75
-elements = H, C, N, O, P, K
-mass fractions = 0.0938, 0.1297, 0.0237, 0.7500, 0.001, 0.0018
-bremsstrahlung correction = NRC
+# calculated from total weight of each element -- unreliable
+#medium = PROSTATE_ICRP23
+#rho = 0.75
+#elements = H, C, N, O, P, K
+#mass fractions = 0.0938, 0.1297, 0.0237, 0.7500, 0.001, 0.0018
+#bremsstrahlung correction = NRC
 
 
 medium = RECTUM_ICRP23

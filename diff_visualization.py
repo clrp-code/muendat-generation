@@ -1,6 +1,4 @@
 # built-in modules
-from subprocess import run as cmd_run
-from subprocess import PIPE
 
 # third party libraries
 import numpy as np
@@ -10,8 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
 # user-defined classes
-from system_info import sys_info
 
+# control variables
 PROD = True
 
 def overlay_old_and_new_data(
@@ -70,10 +68,11 @@ def plot_diffs(
 
 		df = pd.concat([df, material_df], ignore_index=True)
 
+	fig, ax = plt.subplots(figsize=(6,10))
 	sns.pointplot(
 		data=df,
-		x="material",
-		y="rel_diff_pct",
+		x="rel_diff_pct",
+		y="material",
 		linestyle="none",  # Removes the line connecting the points
 		marker="o",  # Point shape
 		errorbar="sd",  # Shows standard deviation ('ci' for confidence intervals)
@@ -81,12 +80,14 @@ def plot_diffs(
 		order=sorted(df["material"].unique())
 	)
 
-	plt.xticks(rotation=90)
-	plt.tick_params(axis='x', labelsize=8)
+	plt.tick_params(axis='y', labelsize=7)
+	plt.tick_params(top=True, right=True, which='both')
+	plt.gca().xaxis.set_minor_locator(AutoMinorLocator(5))
+	plt.axvline(x=0, color='k', linestyle='--', linewidth=0.5)
 
-	plt.xlabel(r"material")
-	plt.ylabel(r"average relative difference / %")
-	plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.37)
+	plt.xlabel(r"average relative difference / %")
+	plt.ylabel(r"material")
+	plt.subplots_adjust(left=0.3, right=0.95, top=0.95, bottom=0.05)
 
 	plt.savefig(f"diffs_all_materials.pdf")
 	if not PROD:

@@ -260,19 +260,20 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 	new_data = {}
 	ignored_list = []
 	for prev_muendat_filename, file_data in prev_data.items():
-		print(f"\nWorking on {prev_muendat_filename}")
+		print(f"\nWorking on materials found in egs_brachy/lib/muen/{prev_muendat_filename}.muendat")
 		file_dict = {}
 
 		for material_name, mat_data in file_data.items():
-			print(f"Working on {material_name}... ", end='')
+			print(f"Working on {material_name}... ", end='', flush=True)
 
 			prev_pegs4, prev_energies, prev_muens = mat_data
 			if (sys_info.g / f"{material_name}.tmpmuen").is_file():
 				pegs4source, energies, muens = recall_cached_muen_for_material_named(material_name)
-				print(f"extracted")
+				print(f"extracted from cache")
 			else:
 				pegs4source, energies, muens = calculate_muen_for_material_named(material_name, prev_pegs4)
-				print(f"done calculation")
+				if len(energies) > 0:
+					print(f"done calculation")
 
 			if len(energies) > 0:
 				file_dict[material_name] = pegs4source, energies, muens
@@ -289,7 +290,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 			mean = rel_diffs.mean()
 			std = rel_diffs.std()
 			print(f"For material {material_name}, avg relative diff is {mean*100:.2f}% with std {std*100:.2f}%")
-			overlay_old_and_new_data(material_old_new_dict, material_name)
+			# overlay_old_and_new_data(material_old_new_dict, material_name)
 
 		new_data[prev_muendat_filename] = file_dict
 
@@ -308,7 +309,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 
 	new_data['new_materials'] = file_dict
 	aggregate_tmpmuens_into_new_muendat(new_data)
-	print(f"We ignored \n{ignored_list}")
+	print(f"We ignored \n{sorted(set(ignored_list))}")
 
 if __name__ == "__main__":
 	main_loop()

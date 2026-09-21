@@ -34,6 +34,7 @@ class SystemInfo:
 				raise SystemExit()
 		self.hen_house = Path(self._hen_house_path).resolve()
 
+		self.pegs4_data = self.hen_house / "pegs4" / "data"
 		self.g = self.egs_home / "g"
 		self.generation = self.egs_home / "g" / "muendat-generation"
 

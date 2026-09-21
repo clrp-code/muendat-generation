@@ -39,7 +39,7 @@ verbose = no
 
 :Start Source Input:
     INCIDENT SPECTRUM=       mono-energy-log-range
-    INCIDENT KINETIC ENERGY= 0.001, 1.5, 2000
+    INCIDENT KINETIC ENERGY= 0.001, 1.4999999999, 2000  # 1.49... tricks g into accepting pegs4dat that ends at 1.5
     Incident Charge=         0
 :Stop Source Input:
 
@@ -104,14 +104,9 @@ def calculate_muen_for_material_named(
 ) -> tuple[str, list[float], list[float]]:
 	"""
 	Creates an input file for the material, runs the input file through the g application, extracts the numerical
-	datapoints from the logfile, outputs the extarcted data to a condensed .tmpmuen file, and cleans up the directory.
+	datapoints from the logfile, outputs the extracted data to a condensed .tmpmuen file, and cleans up the directory.
 	This functions returns a tuple of (pegs4source, energies, muens)
 	"""
-
-	if (sys_info.g / f"{material_name}.log").is_file():
-		print(f"We already tried to generate new data for {material_name}, and failed. "
-			  f"This material will not appear in the new dataset")
-		return "", [], []
 
 	# Run the g application
 	try:
@@ -128,18 +123,18 @@ def calculate_muen_for_material_named(
 			pegs4source = "egs_brachy/lib/media/material.dat"
 	except CalledProcessError:
 		# Failed to find the material in material.dat, will have to to a run with pegs4 input
-		print(f"Failed pegsless, trying with pegs4 input: suggested to be at {prev_pegs4}")
+		print(f"Failed pegsless")
+		print(f"Trying with pegs4 input suggested to be at {prev_pegs4}.pegs4dat... ", end='', flush=True)
 		if prev_pegs4 is None:
 			raise SystemExit
 		if prev_pegs4[-8:] == ".muendat":
 			prev_pegs4 = prev_pegs4[:-8].split('/')[-1]
-		print(f"Looking in {prev_pegs4}")
 
 		try:
 			create_egsinp_for_material_named(material_name, pegsless=False)
 			with open(sys_info.g / f"{material_name}.log", "w") as logfile:
 				cmd_run(
-					args = ["g", "-i", f"{material_name}.egsinp", "-p", f"{prev_pegs4}"],
+					args = ["g", "-i", f"{material_name}.egsinp", "-p", f"{sys_info.pegs4_data}/{prev_pegs4}.pegs4dat"],
 					stdout = logfile,
 					cwd = sys_info.g,
 					stderr = PIPE,
@@ -168,13 +163,14 @@ def calculate_muen_for_material_named(
 
 	# Cleanup artifacts from the run
 	egsinp_file = sys_info.g / f"{material_name}.egsinp"
-	log_file = sys_info.g / f"{material_name}.log"
 	mederr_file = sys_info.g / f"{material_name}.mederr"
 	errors_file = sys_info.g / f"{material_name}.errors"
-	egsinp_file.unlink()
-	log_file.unlink()
-	mederr_file.unlink()
-	errors_file.unlink()
+	log_file = sys_info.g / f"{material_name}.log"
+
+	egsinp_file.unlink(missing_ok=True)
+	mederr_file.unlink(missing_ok=True)
+	errors_file.unlink(missing_ok=True)
+	log_file.unlink(missing_ok=True)
 
 	return pegs4source, energies, muens
 
@@ -267,10 +263,17 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 			print(f"Working on {material_name}... ", end='', flush=True)
 
 			prev_pegs4, prev_energies, prev_muens = mat_data
+			pegs4source, energies, muens = "", [], []
+			successful_cache_recall = False
 			if (sys_info.g / f"{material_name}.tmpmuen").is_file():
 				pegs4source, energies, muens = recall_cached_muen_for_material_named(material_name)
-				print(f"extracted from cache")
-			else:
+				if len(energies) > 0:
+					successful_cache_recall = True
+					print(f"extracted from cache")
+				else:
+					(sys_info.g / f"{material_name}.tmpmuen").unlink()
+
+			if not successful_cache_recall:
 				pegs4source, energies, muens = calculate_muen_for_material_named(material_name, prev_pegs4)
 				if len(energies) > 0:
 					print(f"done calculation")

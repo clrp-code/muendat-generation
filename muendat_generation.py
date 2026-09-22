@@ -203,9 +203,10 @@ def aggregate_tmpmuens_into_new_muendat(new_data: dict[str, dict[str, tuple[list
 				energies, muens = file_data[material_name]
 				outfile.write(f"Muen values for medium MEDIUM = {material_name}\n"
 							  f"Medium used is {material_name} found in egs_brachy/lib/media/material.dat\n"
-							  f"Number of energy intervals is {len(energies)}\n")
+							  f"Number of energy intervals is {len(energies)}\n"
+							  f"Energy[MeV] Muen[cm^2/g]\n")
 				for energy, muen in zip(energies, muens):
-					outfile.write(f"{energy:.6f} MeV {muen:11.6f} cm^2/g\n")
+					outfile.write(f"{energy:.6f} {muen:11.6f}\n")
 
 def main_loop(additional_material_names: list[str] | None = None) -> None:
 	"""
@@ -259,7 +260,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 			mean = rel_diffs.mean()
 			std = rel_diffs.std()
 			print(f"For material {material_name}, avg relative diff is {mean*100:.2f}% with std {std*100:.2f}%")
-			overlay_old_and_new_data(material_old_new_dict, material_name)
+			# overlay_old_and_new_data(material_old_new_dict, material_name)
 
 		new_data[prev_muendat_filename] = file_dict
 

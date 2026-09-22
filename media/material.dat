@@ -794,7 +794,7 @@ bremsstrahlung correction = NRC
 
 medium = PROSTATE_WW86
 rho = 1.04
-elements = H, C, N, O, NA, P, S, CL
+elements = H, C, N, O, NA, P, S, K
 mass fractions = 0.105, 0.089, 0.025, 0.774, 0.002, 0.001, 0.002, 0.002
 bremsstrahlung correction = NRC
 
@@ -803,7 +803,7 @@ bremsstrahlung correction = NRC
 # different name to ease egsphant handling
 medium = URETHRA_WW86
 rho = 1.04
-elements = H, C, N, O, NA, P, S, CL
+elements = H, C, N, O, NA, P, S, K
 mass fractions = 0.105, 0.089, 0.025, 0.774, 0.002, 0.001, 0.002, 0.002
 bremsstrahlung correction = NRC
 
@@ -1003,29 +1003,17 @@ bremsstrahlung correction = NRC
 ##
 #################################################
 
-#medium = PROSTATE_ICRP23
-#rho = 0.75
-#elements = H, C, N, O, NA, P, K, CA, MG
-#mass fractions = 0.098, 0.091, 0.025, 0.781, 0.021, 0.001, 0.002, 0.0001, 0.0001
-#bremsstrahlung correction = NRC
+medium = PROSTATE_ICRP23
+rho = 1.045
+elements = H, C, N, O, NA, P, K, CA, MG
+mass fractions = 0.098, 0.091, 0.025, 0.781, 0.021, 0.001, 0.002, 0.0001, 0.0001
+bremsstrahlung correction = NRC
 
 
 medium = RECTUM_ICRP23
 rho = 0.75
 elements = H, C, N, O, NA, P, CL, K
 mass fractions = 0.063, 0.121, 0.022, 0.788, 0.0001, 0.001, 0.001, 0.001
-bremsstrahlung correction = NRC
-
-#################################################
-##
-##    UNKNOWN
-##
-#################################################
-
-medium = P50C50
-rho = 1.5524
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions = 0.054, 0.0525, 0.015, 0.5905, 0.001, 0.094, 0.001, 0.001, 0.191
 bremsstrahlung correction = NRC
 
 #################################################
@@ -1292,6 +1280,13 @@ bremsstrahlung correction = NRC
 ##
 #########################################################################
 
+medium = AGAR
+rho = 1.04
+elements = H, C, O
+mass fractions =  0.109772, 0.0190050, 0.871223
+bremsstrahlung correction = NRC
+
+
 # Doesn't sum to 1 but that's what was there before
 medium = URINE
 rho = 1.02
@@ -1299,57 +1294,17 @@ elements = H, C, N, O, NA, P, CL, K
 mass fractions = 0.110, 0.005, 0.010, 0.860, 0.004, 0.001, 0.006, 0.002
 bremsstrahlung correction = NRC
 
+
 # Doesn't sum to 1
-medium = 80ADIPOSE-20GLAND-M
+medium = 80ADIPOSE-20GLAND_M
 rho = 0.9623
 elements = H, C, N, O, NA, P, S, CL
 mass fractions = 0.112488, 0.544726, 0.011347, 0.325061, 0.001, 0.000189, 0.001189, 0.001
 bremsstrahlung correction = NRC
 
-medium = PROSTATE_01PCALC
-rho = 1.052
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions = 0.104898, 0.0889270, 0.0249800, 0.773633, 0.001998, 0.001186, 0.001998, 0.001998, 0.000382
-bremsstrahlung correction = NRC
-
-medium = PROSTATE_05PCALC
-rho = 1.0605
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions =  0.10449, 0.088635, 0.0249, 0.772165, 0.00199, 0.00193, 0.00199, 0.00199, 0.00191
-bremsstrahlung correction = NRC
-
-medium = PROSTATE_1PCALC
-rho = 1.0701
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions =  0.10398, 0.08827, 0.0248, 0.77033, 0.00198, 0.00286, 0.00198, 0.00198, 0.00382
-bremsstrahlung correction = NRC
-
-medium = PROSTATE_1p5PCALC
-rho = 1.0703
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions = 0.10347, 0.087905, 0.0247, 0.768495, 0.00197, 0.00379, 0.00197, 0.00197, 0.00573
-bremsstrahlung correction = NRC
-
-medium = PROSTATE_3PCALC
-rho = 1.1006
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions = 0.10194, 0.08681, 0.0244, 0.76299, 0.00194, 0.00658, 0.00194, 0.00194, 0.01146
-bremsstrahlung correction = NRC
-
-medium = PROSTATE_4PCALC
-rho = 1.1208
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions = 0.10092, 0.08608, 0.0242, 0.75932, 0.00192, 0.00844, 0.00192, 0.00192, 0.01528
-bremsstrahlung correction = NRC
-
-medium = PROSTATE_5PCALC
-rho = 1.1505
-elements = H, C, N, O, NA, P, S, K, CA
-mass fractions = 0.0999, 0.08535, 0.024, 0.75565, 0.0019, 0.0103, 0.0019, 0.0019, 0.0191
-bremsstrahlung correction = NRC
-
 #
-# Mixture of ??? with CALCIFICATION_ICRU46
+# Mixtures of ??? with CALCIFICATION_ICRU46
+# online-python.com/G5nFBo2J7g
 #
 
 medium = A0C100
@@ -1485,7 +1440,7 @@ bremsstrahlung correction = NRC
 medium = CALCIFICATION_AUS1_HCO
 rho = 3.06
 elements = H, C, N, O, P, S, CL, K, CA, FE, ZN, SR
-mass fractions = 0.0107285, 0.0033527, 0.272907, 0.231, 0.0019, 0.0044, 0.00062, 0.395, 0.00007, 0.077, 0.00035
+mass fractions = 0.0020116, 0.0107285, 0.0033527, 0.272907, 0.231, 0.0019, 0.0044, 0.00062, 0.395, 0.00007, 0.077, 0.00035
 bremsstrahlung correction = NRC
 
 medium = CALCIFICATION_AUS2_HCO
@@ -1537,9 +1492,10 @@ bremsstrahlung correction = NRC
 
 #
 # Mixture of PROSTATE_WW86 with CALCIFICATION_ICRU46
+# online-python.com/wzKfbQWCcS
 #
 
-medium = A0C100
+medium = P0C100
 rho = 3.06
 elements = H, C, N, O, NA, P, S, K, CA
 mass fractions = 0.0030000, 0.0160000, 0.0050000, 0.4070000, 0.0000000, 0.1870000, 0.0000000, 0.0000000, 0.3820000
@@ -1663,4 +1619,50 @@ medium = P100C0
 rho = 1.04
 elements = H, C, N, O, NA, P, S, K, CA
 mass fractions = 0.1050000, 0.0890000, 0.0250000, 0.7740000, 0.0020000, 0.0010000, 0.0020000, 0.0020000, 0.0000000
+bremsstrahlung correction = NRC
+
+#
+#
+#
+
+medium = PROSTATE_01PCALC
+rho = 1.052
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions = 0.104898, 0.0889270, 0.0249800, 0.773633, 0.001998, 0.001186, 0.001998, 0.001998, 0.000382
+bremsstrahlung correction = NRC
+
+medium = PROSTATE_05PCALC
+rho = 1.0605
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions =  0.10449, 0.088635, 0.0249, 0.772165, 0.00199, 0.00193, 0.00199, 0.00199, 0.00191
+bremsstrahlung correction = NRC
+
+medium = PROSTATE_1PCALC
+rho = 1.0701
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions =  0.10398, 0.08827, 0.0248, 0.77033, 0.00198, 0.00286, 0.00198, 0.00198, 0.00382
+bremsstrahlung correction = NRC
+
+medium = PROSTATE_1p5PCALC
+rho = 1.0703
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions = 0.10347, 0.087905, 0.0247, 0.768495, 0.00197, 0.00379, 0.00197, 0.00197, 0.00573
+bremsstrahlung correction = NRC
+
+medium = PROSTATE_3PCALC
+rho = 1.1006
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions = 0.10194, 0.08681, 0.0244, 0.76299, 0.00194, 0.00658, 0.00194, 0.00194, 0.01146
+bremsstrahlung correction = NRC
+
+medium = PROSTATE_4PCALC
+rho = 1.1208
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions = 0.10092, 0.08608, 0.0242, 0.75932, 0.00192, 0.00844, 0.00192, 0.00192, 0.01528
+bremsstrahlung correction = NRC
+
+medium = PROSTATE_5PCALC
+rho = 1.1505
+elements = H, C, N, O, NA, P, S, K, CA
+mass fractions = 0.0999, 0.08535, 0.024, 0.75565, 0.0019, 0.0103, 0.0019, 0.0019, 0.0191
 bremsstrahlung correction = NRC

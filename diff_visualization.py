@@ -19,7 +19,8 @@ def overlay_old_and_new_data(
 	"""
 	Plots both the old and new muen data for `material_name`.
 	Saves the plot as a pdf.
-	Calling this function will block the program's execution due to the matplotlib .show().
+	If diff_visualization.PROD = False, calling this function will block
+	the program's execution due to the matplotlib .show().
 	"""
 	energies, muens_old, muens_new = material_old_new_dict[material_name]
 	plt.scatter(energies, muens_old, label=r"Old Data")
@@ -53,7 +54,8 @@ def plot_diffs(
 	"""
 	Plots difference between the old and new muen data for all materials.
 	Saves the plot as a pdf.
-	Calling this function will block the program's execution due to the matplotlib .show().
+	If diff_visualization.PROD = False, calling this function will block
+	the program's execution due to the matplotlib .show().
 	"""
 	df = pd.DataFrame(columns=['material', 'rel_diff_pct'])
 	df['material'] = df['material'].astype(str)

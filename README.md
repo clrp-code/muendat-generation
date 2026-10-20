@@ -11,7 +11,7 @@ But first, since we want to use radiative corrections to the Compton cross secti
 our `g` application is compiled with radiative corrections enabled. See PIRS701 page 46. 
 Where you place `$(EGS SOURCEDIR)rad compton1.mortran` in g.make is important, so follow the instructions closely.
 You will also need to manually modify \$HEN_HOUSE/src/egsnrc.mortran if you're using a modern fortran compiler
-(Modern compilers don't like the `a$` part of the mortan code, so you should replace all instances of that pattern 
+(Modern compilers don't like the `a$` part of the mortran code, so you should replace all instances of that pattern 
 with `a` using e.g. the shell command `sed -i.bak 's/a\$$/a/g' egsnrc.mortran`).
 
 You should place this `muendat-generation` repository directly inside the `g` repository (so that this README has the 

@@ -179,7 +179,6 @@ def extract_previous_muendat() -> dict[str, dict[str, tuple[list[float], list[fl
 					continue
 				if components[0] == "Muen":
 					if len(energies) > 0:
-						print(f"Appending for {material_name}")
 						file_dict[material_name] = energies, muens
 					material_name = components[6]  # Muen values for medium MEDIUM = WATER_0.998
 					energies = []

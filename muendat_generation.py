@@ -9,9 +9,12 @@ import numpy as np
 # user-defined classes
 from system_info import sys_info
 from diff_visualization import overlay_old_and_new_data, plot_diffs
+from utils import format_as_latex
 
+# Globals for control flow
 OUTPUT_LATEX_TABLES = False
 SHOW_NEW_OLD_MUENS = False
+ADDITIONAL_MATERIAL_NAMES = []
 
 def create_egsinp_for_material_named(material_name: str) -> None:
 	"""
@@ -164,23 +167,31 @@ def extract_previous_muendat() -> dict[str, dict[str, tuple[list[float], list[fl
 		with open(muendat_file, 'r') as f:
 
 			for line in f:
+
 				line = line.strip()
 				if len(line) == 0:
 					continue
 				if line[0] == "#":  # Ignore easily-detectable comments
 					continue
+
 				components = line.split()
 				if len(components) < 1:
 					continue
 				if components[0] == "Muen":
 					if len(energies) > 0:
+						print(f"Appending for {material_name}")
 						file_dict[material_name] = energies, muens
-					material_name = line.split()[6]  # Muen values for medium MEDIUM = WATER_0.998
+					material_name = components[6]  # Muen values for medium MEDIUM = WATER_0.998
 					energies = []
 					muens = []
 				if components[1] == "MeV":
+					# old format (4 data columns, e.g. 0.001 MeV 4000.15 cm^2/g)
 					energies.append(float(components[0]))
 					muens.append(float(components[2]))
+				if "." in components[0] and "." in components[1]:
+					# new format (2 data columns, e.g. 0.001 4000.15)
+					energies.append(float(components[0]))
+					muens.append(float(components[1]))
 
 			if len(energies) > 0:
 				file_dict[material_name] = energies, muens
@@ -203,6 +214,9 @@ def aggregate_tmpmuens_into_new_muendat(new_data: dict[str, dict[str, tuple[list
 
 		for muendat_filename, file_data in new_data.items():
 			for material_name in file_data.keys():
+				if material_name in material_names:
+					# don't want duplicates, so just use the first
+					continue
 				energies, muens = file_data[material_name]
 				outfile.write(f"Muen values for medium MEDIUM = {material_name}\n"
 							  f"Medium used is {material_name} found in egs_brachy/lib/media/material.dat\n"
@@ -215,12 +229,30 @@ def aggregate_tmpmuens_into_new_muendat(new_data: dict[str, dict[str, tuple[list
 	if OUTPUT_LATEX_TABLES:
 		format_as_latex(material_names)
 
+def extract_material_dat_names():
+	"""
+	Looks in egs_brachy/lib/media/material.dat and finds all material names that exist there
+	"""
+	material_dat_media = []
+	with open(sys_info.brachy_lib / "media" / "material.dat", 'r') as f_file:
+		for f_line in f_file:
+			terms = f_line.split()
+			if len(terms) == 0:
+				continue
+			if terms[0] == "medium":
+				material_dat_media.append(terms[2])
+
+	if OUTPUT_LATEX_TABLES:
+		format_as_latex(material_dat_media)
+
 def main_loop(additional_material_names: list[str] | None = None) -> None:
 	"""
 	Finds old .muendat files in egs_brachy/lib/muen, tries to replicate their results, and outputs
 	the new data to the `g` directory with the same .muendat names. Plotting is done to compare new and old results.
 	Additional materials specified in the __main__ function below are placed in a `new_materials.muendat` file
 	"""
+
+	extract_material_dat_names()
 	if additional_material_names is None:
 		additional_material_names = []
 
@@ -230,7 +262,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 	new_data = {}
 	ignored_list = []
 	for prev_muendat_filename, file_data in prev_data.items():
-		print(f"\nWorking on materials found in egs_brachy/lib/muen/{prev_muendat_filename}.muendat")
+		print(f"\nWorking on {len(file_data)} materials found in egs_brachy/lib/muen/{prev_muendat_filename}.muendat")
 		file_dict = {}
 
 		for material_name, mat_data in file_data.items():
@@ -293,81 +325,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 	else:
 		print(f"All materials were successfully generated ✓")
 
-def format_as_latex(some_list: list[str]) -> None:
-
-	some_list = sorted(list(set(some_list)))
-
-	trimmed_list = []
-	mixture_list_AC = [f"A{n}C{100-n}" for n in range(0, 105, 5)]
-	mixture_list_PC = [f"P{n}C{100-n}" for n in range(0, 105, 5)]
-
-	for entry in some_list:
-		if entry in mixture_list_AC:
-			continue
-		if entry in mixture_list_PC:
-			continue
-		if entry in [
-			"10GLAND-90ADIPOSE",
-			"25GLAND-75ADIPOSE",
-			"25GLAND-75ADIPOSE",
-			"75GLAND-25ADIPOSE",
-			"80ADIPOSE-20GLAND",
-			"80ADIPOSE-20GLAND_M",
-			"90GLAND-10ADIPOSE",
-			"CALCIFICATION_AUS1_HCO",
-			"CALCIFICATION_AUS1_O",
-			"CALCIFICATION_AUS2_HCO",
-			"CALCIFICATION_AUS2_O",
-			"CALCIFICATION_AUS2_O",
-			"CALCIFICATION_AUS3_HCO",
-			"CALCIFICATION_AUS3_O",
-			"CALCIFICATION_AUS4_HCO",
-			"CALCIFICATION_AUS4_O",
-			"PROSTATE_01PCALC",
-			"PROSTATE_05PCALC",
-			"PROSTATE_1PCALC",
-			"PROSTATE_1p5PCALC",
-			"PROSTATE_3PCALC",
-			"PROSTATE_4PCALC",
-			"PROSTATE_5PCALC"]:
-			# don't include ALL the mixtures
-			continue
-		if "SS_" in entry or "%" in entry or "__" in entry:
-			# small trim
-			continue
-		if "COLLSTRUCMECH" in entry or "BLOODFILLED" in entry:
-			# too long for latex columns
-			continue
-		if len(entry) < 3:
-			# don't include elements
-			continue
-		trimmed_list.append(entry)
-
-	length = len(trimmed_list)
-	one_third = len(trimmed_list) // 3
-	for idx in range(one_third+1):
-		out_str = ""
-		for col in range(3):
-			jdx = col * one_third + idx
-			if jdx < length:
-				name = r"\_".join(trimmed_list[jdx].split('_'))
-				name = r"\%".join(name.split('%'))
-				out_str += f" {name} &"
-
-		print(f"{out_str[:-1]} \\\\")
 
 if __name__ == "__main__":
 
-	material_dat_media = []
-	with open(sys_info.brachy_lib / "media" / "material.dat", 'r') as f_file:
-		for f_line in f_file:
-			terms = f_line.split()
-			if len(terms) == 0:
-				continue
-			if terms[0] == "medium":
-				material_dat_media.append(terms[2])
-
-	if OUTPUT_LATEX_TABLES:
-		format_as_latex(material_dat_media)
-
-	main_loop()
+	main_loop(ADDITIONAL_MATERIAL_NAMES)

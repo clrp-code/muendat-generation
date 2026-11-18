@@ -16,6 +16,28 @@ OUTPUT_LATEX_TABLES = False
 SHOW_NEW_OLD_MUENS = False
 ADDITIONAL_MATERIAL_NAMES = []
 
+def check_mxge_in_g_mortan():
+	"""
+	The default value for the number of gridpoints for the photoelectric cross section
+	in the EGSnrc backend `g` is 2000. This default value causes interpolation artifacts
+	at the K-edge of various high-Z elements. This function makes sure that a higher value is set
+	in g.mortran. It's up to the user to make sure that this new value is compiled
+	"""
+	with open(sys_info.g / "g.mortran", 'r') as f:
+		for line in f:
+			if "REPLACE {$MXGE} WITH" not in line:
+				continue
+
+			val = int((line.strip().split()[-1]).strip("}").strip("{"))
+			print(f"EGSnrc backend is using {val} gridpoints to interpolate photoelectric cross section")
+			if val < 10000:
+				print("\nERROR: You should be using at least 10k gridpoints in the EGSnrc backend")
+				print("Please go to line 232 of g.mortran and set the line to reads\n\nREPLACE {$MXGE} WITH {10000}\n")
+				print("Then, in the `g` directory, type\n\nmake\n\nto ensure that the changes have been saved")
+				raise SystemExit
+			break
+
+
 def create_egsinp_for_material_named(material_name: str) -> None:
 	"""
 	Creates an input file for mu_en data for `material_name` with the `g` application
@@ -327,4 +349,5 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
 
+	check_mxge_in_g_mortan()
 	main_loop(ADDITIONAL_MATERIAL_NAMES)

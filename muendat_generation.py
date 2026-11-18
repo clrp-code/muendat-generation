@@ -11,9 +11,14 @@ from system_info import sys_info
 from diff_visualization import overlay_old_and_new_data, plot_diffs
 from utils import format_as_latex
 
-# Globals for control flow
+
+# whether or not to print latex tables (for e.g. egs_brachy_manual.tex)
 OUTPUT_LATEX_TABLES = False
+
+# whether or not to make plots comparing old and new data
 SHOW_NEW_OLD_MUENS = False
+
+# a list of materials in lib/media/material.dat that don't already have a .muendat entry
 ADDITIONAL_MATERIAL_NAMES = []
 
 def check_mxge_in_g_mortan():

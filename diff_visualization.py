@@ -48,6 +48,25 @@ def overlay_old_and_new_data(
 		plt.show()
 	plt.close()
 
+def plot_new_data(energies: list[float], muens: list[float], material_name: str) -> None:
+	"""
+	Plots both the new muen data for `material_name`.
+	Saves the plot as a pdf.
+	If diff_visualization.PROD = False, calling this function will block
+	the program's execution due to the matplotlib .show().
+	"""
+	plt.scatter(energies, muens, label=r"New Data")
+	plt.xscale('log')
+	plt.yscale('log')
+	plt.xlabel(r"photon energy / MeV")
+	plt.ylabel(r"$\mu_{en}/\rho$"+f"({material_name})" + r" / g cm$^{-2}$")
+	plt.legend()
+	plt.tick_params(top=True, right=True, which='both')
+	plt.savefig(f"old_new_muens_{material_name}.pdf")
+	if not PROD:
+		plt.show()
+	plt.close()
+
 def plot_diffs(
 		material_old_new_dict: dict[str, tuple[list[float], list[float], list[float]]]
 ) -> None:

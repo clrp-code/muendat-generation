@@ -8,7 +8,7 @@ import numpy as np
 
 # user-defined classes
 from system_info import sys_info
-from diff_visualization import overlay_old_and_new_data, plot_diffs
+from diff_visualization import overlay_old_and_new_data, plot_diffs, plot_new_data
 from utils import format_as_latex
 
 
@@ -19,29 +19,39 @@ OUTPUT_LATEX_TABLES = False
 SHOW_NEW_OLD_MUENS = False
 
 # a list of materials in lib/media/material.dat that don't already have a .muendat entry
-ADDITIONAL_MATERIAL_NAMES = []
+ADDITIONAL_MATERIAL_NAMES: list[str] = []
+
+MIN_ENERGY_MEV = 0.001
+MAX_ENERGY_MEV = 1.500
+NUM_GRIDPOINTS = 2000
 
 def check_mxge_in_g_mortan():
 	"""
-	The default value for the number of gridpoints for the photoelectric cross section
-	in the EGSnrc backend `g` is 2000. This default value causes interpolation artifacts
-	at the K-edge of various high-Z elements. This function makes sure that a higher value is set
-	in g.mortran. It's up to the user to make sure that this new value is compiled
+	The default value for the number of gridpoints (MXGE) for the photoelectric cross section
+	in the EGSnrc backend `g` is 2000. If MXGE is not equal to the number of gridpoints defined
+	above in NUM_GRIDPOINTS, the misaligned grids cause interpolation artifacts
+	at the K-edge of various high-Z elements. This function guards against the two values being unequal.
+	It is the user's responsibility to make sure that any change to the EGSnrc default value is properly compiled.
 	"""
 	with open(sys_info.g / "g.mortran", 'r') as f:
 		for line in f:
 			if "REPLACE {$MXGE} WITH" not in line:
 				continue
 
-			val = int((line.strip().split()[-1]).strip("}").strip("{"))
-			print(f"EGSnrc backend is using {val} gridpoints to interpolate photoelectric cross section")
-			if val < 10000:
-				print("\nERROR: You should be using at least 10k gridpoints in the EGSnrc backend")
-				print("Please go to line 232 of g.mortran and set the line to reads\n\nREPLACE {$MXGE} WITH {10000}\n")
-				print("Then, in the `g` directory, type\n\nmake\n\nto ensure that the changes have been saved")
+			mxge = int((line.strip().split()[-1]).strip("}").strip("{"))
+			print(f"\nINFO: EGSnrc backend is using {mxge} gridpoints to interpolate photoelectric cross sections")
+			if mxge != NUM_GRIDPOINTS:
+				print(f"\nERROR: muendat-generation has requested {NUM_GRIDPOINTS} gridpoints")
+				print(f"       Misaligned grids cause interpolation artifacts in the resulting dataset.")
+				print(f"       Either (1) change NUM_GRIDPOINTS to {mxge} or (2) change MXGE in the EGSnrc backend\n")
+
+				print("       For (2) please go to line 232 of g.mortran and set the line to read")
+				print("       REPLACE {$MXGE} WITH {" + f"{NUM_GRIDPOINTS}" + "}")
+				print("       Then, in the `g` directory, use the command line to type\n")
+				print("       make\n")
+				print("       to ensure that the changes have been properly compiled.\n\n")
 				raise SystemExit
 			break
-
 
 def create_egsinp_for_material_named(material_name: str) -> None:
 	"""
@@ -72,13 +82,13 @@ verbose = no
 
 :Start Source Input:
     INCIDENT SPECTRUM=       mono-energy-log-range
-    INCIDENT KINETIC ENERGY= 0.001, 1.5, 2000
+    INCIDENT KINETIC ENERGY= {MIN_ENERGY_MEV:1.3f}, {MAX_ENERGY_MEV:1.3f}, {NUM_GRIDPOINTS}
     Incident Charge=         0
 :Stop Source Input:
 
 :Start MC Transport Parameter:
-    Global ECUT=                    0.512
-    Global PCUT=                    0.001
+    Global ECUT=                    {MIN_ENERGY_MEV+0.511:1.3f}
+    Global PCUT=                    {MIN_ENERGY_MEV:1.3f}
     Global SMAX=                    1e10
     Spin effects=                   On
     Rayleigh scattering=            On
@@ -101,10 +111,10 @@ verbose = no
 :Stop MC Transport Parameter:
 
 :Start Media Definition:
-    ae= 0.512
-    ue= 2.511
-    ap= 0.001
-    up= 2.00
+    ae= {MIN_ENERGY_MEV+0.511:1.3f}
+    ue= {MAX_ENERGY_MEV+0.511:1.3f}
+    ap= {MIN_ENERGY_MEV:1.3f}
+    up= {MAX_ENERGY_MEV+1e-6:1.6f}
     material data file= {str(sys_info.brachy_lib)}/media/material.dat
 :Stop Media Definition:
 """
@@ -114,8 +124,8 @@ verbose = no
 
 def recall_cached_muen_for_material_named(material_name: str) -> tuple[list[float], list[float]]:
 	"""
-	Load the cached data for a newly-generated dataset that's help in /tmpmuen files. Returns
-	(energies, muens).
+	Load the cached data for a newly-generated dataset that is held in .tmpmuen files.
+	Returns (energies, muens).
 	"""
 	energies = []
 	muens = []
@@ -255,9 +265,9 @@ def aggregate_tmpmuens_into_new_muendat(new_data: dict[str, dict[str, tuple[list
 	if OUTPUT_LATEX_TABLES:
 		format_as_latex(material_names)
 
-def extract_material_dat_names():
+def extract_material_dat_names() -> None:
 	"""
-	Looks in egs_brachy/lib/media/material.dat and finds all material names that exist there
+	Looks in egs_brachy/lib/media/material.dat and prints all material names that exist there
 	"""
 	material_dat_media = []
 	with open(sys_info.brachy_lib / "media" / "material.dat", 'r') as f_file:
@@ -271,7 +281,7 @@ def extract_material_dat_names():
 	if OUTPUT_LATEX_TABLES:
 		format_as_latex(material_dat_media)
 
-def main_loop(additional_material_names: list[str] | None = None) -> None:
+def main_loop() -> None:
 	"""
 	Finds old .muendat files in egs_brachy/lib/muen, tries to replicate their results, and outputs
 	the new data to the `g` directory with the same .muendat names. Plotting is done to compare new and old results.
@@ -279,8 +289,6 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 	"""
 
 	extract_material_dat_names()
-	if additional_material_names is None:
-		additional_material_names = []
 
 	material_old_new_dict = {}
 
@@ -334,7 +342,7 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 		plot_diffs(material_old_new_dict)
 
 	file_dict = {}
-	for material_name in additional_material_names:
+	for material_name in ADDITIONAL_MATERIAL_NAMES:
 		print(f"Working on additional {material_name}")
 
 		if (sys_info.g / f"{material_name}.tmpmuen").is_file():
@@ -342,6 +350,9 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 		else:
 			energies, muens = calculate_muen_for_material_named(material_name)
 		file_dict[material_name] = "egs_brachy/lib/media/material.dat", energies, muens
+
+		if SHOW_NEW_OLD_MUENS:
+			plot_new_data(energies, muens, material_name)
 
 	new_data['new_materials'] = file_dict
 	aggregate_tmpmuens_into_new_muendat(new_data)
@@ -355,4 +366,4 @@ def main_loop(additional_material_names: list[str] | None = None) -> None:
 if __name__ == "__main__":
 
 	check_mxge_in_g_mortan()
-	main_loop(ADDITIONAL_MATERIAL_NAMES)
+	main_loop()

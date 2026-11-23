@@ -28,7 +28,13 @@ def overlay_old_and_new_data(
 	plt.xscale('log')
 	plt.yscale('log')
 	plt.xlabel(r"photon energy / MeV")
-	plt.ylabel(r"$\mu_{en}/\rho$"+f"({material_name})" + r" / g cm$^{-2}$")
+	latex_name = ""
+	for char in material_name:
+		if char == "_":
+			latex_name += r"\_"
+		else:
+			latex_name += char
+	plt.ylabel(r"[$\mu_{en}/\rho]_\mathrm{"+f"{latex_name}" + r"}$ / g cm$^{-2}$")
 	plt.legend()
 	plt.tick_params(top=True, right=True, which='both')
 	plt.savefig(f"old_new_muens_{material_name}.pdf")
@@ -59,10 +65,16 @@ def plot_new_data(energies: list[float], muens: list[float], material_name: str)
 	plt.xscale('log')
 	plt.yscale('log')
 	plt.xlabel(r"photon energy / MeV")
-	plt.ylabel(r"$\mu_{en}/\rho$"+f"({material_name})" + r" / g cm$^{-2}$")
+	latex_name = ""
+	for char in material_name:
+		if char == "_":
+			latex_name += r"\_"
+		else:
+			latex_name += char
+	plt.ylabel(r"[$\mu_{en}/\rho]_\mathrm{"+f"{latex_name}" + r"}$ / g cm$^{-2}$")
 	plt.legend()
 	plt.tick_params(top=True, right=True, which='both')
-	plt.savefig(f"old_new_muens_{material_name}.pdf")
+	plt.savefig(f"muens_{material_name}.pdf")
 	if not PROD:
 		plt.show()
 	plt.close()

@@ -19,7 +19,7 @@ OUTPUT_LATEX_TABLES = False
 SHOW_NEW_OLD_MUENS = False
 
 # a list of materials in lib/media/material.dat that don't already have a .muendat entry
-ADDITIONAL_MATERIAL_NAMES: list[str] = []
+ADDITIONAL_MATERIAL_NAMES: list[str] = []  # e.g. ["TEST_MATERIAL1", "TEST_MATERIAL2"]
 
 MIN_ENERGY_MEV = 0.001
 MAX_ENERGY_MEV = 1.500
@@ -343,13 +343,13 @@ def main_loop() -> None:
 
 	file_dict = {}
 	for material_name in ADDITIONAL_MATERIAL_NAMES:
-		print(f"Working on additional {material_name}")
+		print(f"Working on additional material named {material_name}")
 
 		if (sys_info.g / f"{material_name}.tmpmuen").is_file():
 			energies, muens = recall_cached_muen_for_material_named(material_name)
 		else:
 			energies, muens = calculate_muen_for_material_named(material_name)
-		file_dict[material_name] = "egs_brachy/lib/media/material.dat", energies, muens
+		file_dict[material_name] = energies, muens
 
 		if SHOW_NEW_OLD_MUENS:
 			plot_new_data(energies, muens, material_name)
